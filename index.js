@@ -57,6 +57,11 @@ app.delete('/todos/:id', (req, res) => {
   });
 });
 
+app.get('/',(req,res)=>{
+    res.send('Server connected')
+
+})
+
 app.listen(5000, () => {
   console.log('Listening on port 5000');
 });
