@@ -3,9 +3,10 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const mongodb = require('mongodb');
+require('dotenv').config();
 
 const MongoClient = mongodb.MongoClient;
-const url = 'mongodb://localhost:27017';
+const url = `mongodb+srv://${process.env.db_user}:${process.env.db_pass}@cluster0.4txcfpw.mongodb.net/?retryWrites=true&w=majority`;
 const dbName = 'todos';
 
 let db;
