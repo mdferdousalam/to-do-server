@@ -1,67 +1,66 @@
-
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const mongodb = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 
-const MongoClient = mongodb.MongoClient;
-const url = `mongodb+srv://${process.env.db_user}:${process.env.db_pass}@cluster0.4txcfpw.mongodb.net/?retryWrites=true&w=majority`;
-const dbName = 'todos';
-
-let db;
-
-MongoClient.connect(url, { useNewUrlParser: true }, (err, client) => {
-  if (err) {
-    console.error(err);
-    return;
-  }
-  console.log('Connected successfully to MongoDB');
-  db = client.db(dbName);
-});
+const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
-app.get('/todos', (req, res) => {
-  db.collection('todos').find({}).toArray((err, todos) => {
-    if (err) {
-      console.error(err);
-      res.sendStatus(500);
-      return;
-    }
-    res.send(todos);
-  });
-});
+// {
+//   origin: ["http://localhost:3000"],
+//   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+//   // credentials: true,
+//   // "Access-Control-Allow-Credentials": true,
+//   "Access-Control-Allow-Origin": "*",
+//   "Access-Control-Allow-Headers": "*",
+// }
+// MOngoDB connection 
 
-app.post('/todos', (req, res) => {
-  const todo = { text: req.body.text, done: false };
-  db.collection('todos').insertOne(todo, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.sendStatus(500);
-      return;
-    }
-    res.send(result.ops[0]);
-  });
-});
+const url = `mongodb+srv://${process.env.db_user}:${process.env.db_pass}@cluster0.4txcfpw.mongodb.net/?retryWrites=true&w=majority`;
+const client = new MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-app.delete('/todos/:id', (req, res) => {
-  db.collection('todos').deleteOne({ _id: new mongodb.ObjectID(req.params.id) }, (err, result) => {
-    if (err) {
-      console.error(err);
-      res.sendStatus(500);
-      return;
-    }
-    res.sendStatus(200);
-  });
-});
+async function run(){
+  try {
+    const toDosCollection = client.db('todolist').collection('todos')
+
+    app.get('/todos', async (req, res) => {
+      const query = {}
+      const todos = await toDosCollection.find(query).toArray();
+      res.send(todos);
+      });
+
+
+    app.post('/todos', async(req, res) => {
+      const todo = { text: req.body.text, done: false };
+      const result = await toDosCollection.insertOne(todo)
+      res.send(result);
+    });
+
+    app.delete('/todos/:id', async (req, res) => {
+      const id =req.query.id;
+      const filter = {_id: ObjectId(id)}
+      const todos = await toDosCollection.deleteOne(filter)
+      res.send(todos);
+    });
+
+
+  }
+  finally {
+
+  }
+  
+}
+
+run().catch(console.log);
+
 
 app.get('/',(req,res)=>{
-    res.send('Server connected')
-
+  res.send('Server connected')
 })
 
-app.listen(5000, () => {
-  console.log('Listening on port 5000');
+app.listen(port, () => {
+  console.log(`Connected server on port: ${port}`);
 });
